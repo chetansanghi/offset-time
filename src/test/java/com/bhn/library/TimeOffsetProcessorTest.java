@@ -11,6 +11,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -93,12 +95,12 @@ public class TimeOffsetProcessorTest
     }
     
     @Test
-    public void whenInputAs86401Seconds_ThenIllegalArgumentExceptionThrown() {
-    	logger.info("****** START whenInputAs86401Seconds_ThenIllegalArgumentExceptionThrown **********");    	
+    public void whenInputIsMoreThan1YearInSeconds_ThenIllegalArgumentExceptionThrown() {
+    	logger.info("****** START whenInputIsMoreThan1YearInSeconds_ThenIllegalArgumentExceptionThrown **********");    	
         assertThrows(IllegalArgumentException.class, () -> {
-        	timeOffsetProcessor.addTimeOffset(new String[] {"86401"});
+        	timeOffsetProcessor.addTimeOffset(new String[] {"1314001"});
         });
-    	logger.info("****** END whenInputAs86401Seconds_ThenIllegalArgumentExceptionThrown **********");        
+    	logger.info("****** END whenInputIsMoreThan1YearInSeconds_ThenIllegalArgumentExceptionThrown **********");        
     }
     
     @Test
@@ -223,8 +225,8 @@ public class TimeOffsetProcessorTest
     }
 
     @Test
-    public void whenInputSecondsAre60_ThenRolloverSecondAndIncrementMinute() {
-    	logger.info("****** START whenInputSecondsAre60_ThenRolloverSecondAndIncrementMinute **********");    	
+    public void whenInputSecondsAre1Minute_ThenRolloverSecondAndIncrementMinute() {
+    	logger.info("****** START whenInputSecondsAre1Minute_ThenRolloverSecondAndIncrementMinute **********");    	
     	final LocalTime specifiedTime = timeProcessorHelper.getSpecifiedTime(specifiedHours, specifiedMinutes, specifiedSeconds);
     	timeOffsetProcessor = new TimeOffsetProcessor(specifiedTime);
     	Optional<LocalTime> timeWithOffset = timeOffsetProcessor.addTimeOffset(new String[] {"60"});
@@ -234,12 +236,12 @@ public class TimeOffsetProcessorTest
     	assertNotNull(timeWithOffset);
     	assertNotNull(timeWithOffset.get());
     	assertEquals(timeWithOffset.get(), expectedTime);
-    	logger.info("****** END whenInputSecondsAre60_ThenRolloverSecondAndIncrementMinute **********");    	
+    	logger.info("****** END whenInputSecondsAre1Minute_ThenRolloverSecondAndIncrementMinute **********");    	
     }
     
     @Test
-    public void whenInputSecondsAre3600_ThenRolloverSecondAndRolloverMinuteAndIncrementHour() {
-    	logger.info("****** START whenInputSecondsAre3600_ThenRolloverSecondAndRolloverMinuteAndIncrementHour **********");    	
+    public void whenInputSecondsAre1Hour_ThenRolloverSecondAndRolloverMinuteAndIncrementHour() {
+    	logger.info("****** START whenInputSecondsAre1Hour_ThenRolloverSecondAndRolloverMinuteAndIncrementHour **********");    	
     	final LocalTime specifiedTime = timeProcessorHelper.getSpecifiedTime(specifiedHours, specifiedMinutes, specifiedSeconds);
     	timeOffsetProcessor = new TimeOffsetProcessor(specifiedTime);
     	Optional<LocalTime> timeWithOffset = timeOffsetProcessor.addTimeOffset(new String[] {"3600"});
@@ -249,25 +251,10 @@ public class TimeOffsetProcessorTest
     	assertNotNull(timeWithOffset);
     	assertNotNull(timeWithOffset.get());
     	assertEquals(timeWithOffset.get(), expectedTime);
-    	logger.info("****** END whenInputSecondsAre3600_ThenRolloverSecondAndRolloverMinuteAndIncrementHour **********");    	
+    	logger.info("****** END whenInputSecondsAre1Hour_ThenRolloverSecondAndRolloverMinuteAndIncrementHour **********");    	
     }
     
     
-    @Test
-    public void whenInputSecondsAre86400_ThenRolloverSecondAndRolloverMinuteAndRolloverHourAndNoIncrement() {
-    	logger.info("****** START whenInputSecondsAre86400_ThenRolloverSecondAndRolloverMinuteAndRolloverHour **********");    	
-    	final LocalTime specifiedTime = timeProcessorHelper.getSpecifiedTime(specifiedHours, specifiedMinutes, specifiedSeconds);
-    	timeOffsetProcessor = new TimeOffsetProcessor(specifiedTime);
-    	Optional<LocalTime> timeWithOffset = timeOffsetProcessor.addTimeOffset(new String[] {"86400"});
-    	LocalTime expectedTime = specifiedTime.plusSeconds(86400).truncatedTo(ChronoUnit.SECONDS);
-    	logger.info("timeWithOffset = " + timeWithOffset.get());
-    	logger.info("expectedTime = " + expectedTime);    	
-    	assertNotNull(timeWithOffset);
-    	assertNotNull(timeWithOffset.get());
-    	assertEquals(timeWithOffset.get(), expectedTime);
-    	logger.info("****** END whenInputSecondsAre86400_ThenRolloverSecondAndRolloverMinuteAndRolloverHour **********");    	
-    }
-
     @Test
     public void when230000_Add59Seconds_SecondsAdded() {
     	logger.info("****** START when230000_Add59Seconds_SecondsAdded **********");    	
@@ -619,5 +606,21 @@ public class TimeOffsetProcessorTest
     	assertEquals(timeWithOffset.get(), expectedTime);
     	logger.info("****** END when005959_Add58Minutes59Seconds_HoursIncrementedAndMinutesAreIncrementedAndSecondsAreIncremented **********");    	
     }
-    
+
+    @ParameterizedTest
+    @ValueSource(strings = { "86400", "129600", "172800","216000","259200","302400","1314000" })
+    public void whenInputSecondsAre1YearOrMore_ThenRolloverSecondAndRolloverMinuteAndRolloverHourAndNoIncrement(String timeOffsetInSeconds) {
+    	logger.info("****** START whenInputSecondsAre1YearOrMore_ThenRolloverSecondAndRolloverMinuteAndRolloverHourAndNoIncrement **********");    	
+    	final LocalTime specifiedTime = timeProcessorHelper.getSpecifiedTime(specifiedHours, specifiedMinutes, specifiedSeconds);
+    	timeOffsetProcessor = new TimeOffsetProcessor(specifiedTime);
+    	Optional<LocalTime> timeWithOffset = timeOffsetProcessor.addTimeOffset(new String[] {timeOffsetInSeconds});
+    	LocalTime expectedTime = specifiedTime.plusSeconds(Integer.parseInt(timeOffsetInSeconds)).truncatedTo(ChronoUnit.SECONDS);
+    	logger.info("timeWithOffset = " + timeWithOffset.get());
+    	logger.info("expectedTime = " + expectedTime);    	
+    	assertNotNull(timeWithOffset);
+    	assertNotNull(timeWithOffset.get());
+    	assertEquals(timeWithOffset.get(), expectedTime);
+    	logger.info("****** END whenInputSecondsAre1YearOrMore_ThenRolloverSecondAndRolloverMinuteAndRolloverHourAndNoIncrement **********");    	
+    }
+
 }

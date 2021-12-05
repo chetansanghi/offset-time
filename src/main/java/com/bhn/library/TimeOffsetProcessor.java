@@ -18,7 +18,7 @@ public class TimeOffsetProcessor
 {
 	private static final Logger logger = LoggerFactory.getLogger(TimeOffsetProcessor.class);
 	
-	public static final int NUM_SEC_DAY = 86400;
+	public static final int NUM_SEC_SUPPORTED = 1314000;
 	public static final int MAX_SECONDS = 60;
 	public static final int MAX_MINUTES = 60;	
 	public static final int MAX_HOURS = 24;	
@@ -91,11 +91,11 @@ public class TimeOffsetProcessor
      */
     private void validateTimeOffsetIsNumeric(final int timeOffset) {
     	final Predicate<Integer> greaterThanZero = (i) -> i > 0;
-    	final Predicate<Integer> lessThanEqualToNumSecDay = (i) -> i <= 86400;
+    	final Predicate<Integer> lessThanEqualToNumSec1Year = (i) -> i <= NUM_SEC_SUPPORTED;
     	
-        boolean isTimeOffsetValid = greaterThanZero.and(lessThanEqualToNumSecDay).test(timeOffset);
+        boolean isTimeOffsetValid = greaterThanZero.and(lessThanEqualToNumSec1Year).test(timeOffset);
         if ( !isTimeOffsetValid ) {
-        	throw new IllegalArgumentException("Please check time offset value provided. Valid range is 1 to 86400 seconds.");
+        	throw new IllegalArgumentException("Please check time offset value provided. Valid range is greater than 0 seconds and less than equal to one year");
         }
     	
     }
@@ -160,8 +160,9 @@ public class TimeOffsetProcessor
     	
     	int nowHours = now.getHour();
     	nowHours = nowHours + hoursToAdd;
-    	if ( nowHours >= MAX_HOURS ) {
-        	logger.info("Now Hours after adding hours offset greater than 24 and this means date needs to change");    		
+    	logger.info("hours before adding offset hours: " + nowHours);    	
+    	while ( nowHours >= MAX_HOURS ) {
+        	logger.info("Now Hours after adding hours offset greater than 24 and this means date needs to change");    	
     		nowHours -= MAX_HOURS;
     	}
     	logger.info("hours after adding offset hours: " + nowHours);    		
